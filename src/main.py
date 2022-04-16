@@ -6,6 +6,7 @@ from gi.repository import Gtk
 from datetime import date, datetime, timedelta
 
 class mainWindow(Gtk.Window):
+    # Class variables
     sp = 8
     now = datetime.now()
     day = int(now.strftime("%d"))
@@ -17,14 +18,17 @@ class mainWindow(Gtk.Window):
         self.set_border_width(self.sp)
         self.set_resizable(0)
 
+        # Main frame
         vboxFrame = Gtk.Box(spacing = self.sp, orientation = 1)
         self.add(vboxFrame)
 
         ######## HEADER ########
 
+        # Box containing control buttons
         hboxHeader = Gtk.Box(spacing = self.sp)
         vboxFrame.pack_start(hboxHeader, 0, 0, 0)
 
+        # Configuring month's combo box
         monthText = Gtk.CellRendererText()
         monthList = [(date(1, 1, 1) + timedelta(days = i * 31)).strftime("%B").capitalize() for i in range(12)]
         monthStore = Gtk.ListStore(str)
@@ -48,6 +52,7 @@ class mainWindow(Gtk.Window):
         btnNextMonth.connect("clicked", self.month_inc, 1)
         hboxHeader.pack_start(btnNextMonth, 0, 0, 0)
 
+        # Configuring year's spin button
         adjYear = Gtk.Adjustment(
             value = self.year,
             lower = 1,
@@ -79,6 +84,7 @@ class mainWindow(Gtk.Window):
                 self.lblDay[i][j].set_size_request(40, 0)
                 row.pack_start(self.lblDay[i][j], 1, 1, 0)
 
+        # Setting month days for the first time
         self.month_changed(None)
 
     def month_inc(self, widget, inc):
@@ -95,26 +101,32 @@ class mainWindow(Gtk.Window):
         self.cbxMonth.set_active(self.month - 1)
 
     def month_changed(self, widget):
+        # Updates the widget only if the call comes from itself
         if widget:
             self.month = widget.get_active() + 1
 
+        # Counter for subsequent month days and bold flag
         nxt = 1
         bold = 0
 
         for i in range(1, len(self.lblDay)):
             for j in range(len(self.lblDay[i])):
+                # Weekday number of the first day of the selected month
                 first = int(date(self.year, self.month, 1).strftime("%w"))
 
+                # monthday number of the last day of the selected month
                 if self.month == 12:
                     last = int((date(self.year + 1, 1, 1) - timedelta(days = 1)).strftime("%d"))
                 else:
                     last = int((date(self.year, self.month + 1, 1) - timedelta(days = 1)).strftime("%d"))
 
+                # Setting an offset depending on the first day of the month
                 if first < 2:
                     offset = -5
                 else:
                     offset = 2
 
+                # Determining each day of the month depending on row (i), column (j), offset and first day of the month
                 num = j + offset - first + 7 * (i - 1)
 
                 if num < 1:
