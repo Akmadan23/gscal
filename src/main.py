@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 import gi
 gi.require_version("Gtk", "3.0")
-
 from gi.repository import Gtk
+
+import toml
+from os.path import expanduser
 from datetime import date, datetime, timedelta
 
 class mainWindow(Gtk.Window):
@@ -17,6 +19,17 @@ class mainWindow(Gtk.Window):
         super().__init__(title = "Simple calendar")
         self.set_border_width(self.sp)
         self.set_resizable(0)
+
+        ######## CONFIG ########
+
+        try:
+            # Importing settings from config file
+            self.config = toml.load(expanduser("~/.config/scal/scal.toml"))
+            print(self.config)
+        except FileNotFoundError:
+            print("Config file not found.")
+        except ValueError as e:
+            print("Error in the config file:", e)
 
         # Main frame
         vboxFrame = Gtk.Box(spacing = self.sp, orientation = 1)
