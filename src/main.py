@@ -3,6 +3,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
+import re
 import toml
 from os.path import expanduser
 from datetime import date, datetime, timedelta
@@ -15,6 +16,12 @@ class mainWindow(Gtk.Window):
     month = int(now.strftime("%m"))
     year = int(now.strftime("%Y"))
 
+    # Default configuration
+    config = {
+        "sunday_first": False,
+        "sunday_color": "#CC0000",
+    }
+
     def __init__(self):
         super().__init__(title = "Simple calendar")
         self.set_border_width(self.sp)
@@ -25,7 +32,14 @@ class mainWindow(Gtk.Window):
         try:
             # Importing settings from config file
             self.config = toml.load(expanduser("~/.config/scal/scal.toml"))
-            print(self.config)
+
+            # If the sunday_first is not a bool value defaults to false
+            if "sunday_first" not in self.config or type(self.config["sunday_first"]) is not bool:
+                self.config["sunday_first"] = mainWindow.config["sunday_first"]
+
+            # If the sunday_color value is not a valid color defaults to red
+            if "sunday_color" not in self.config or type(self.config["sunday_color"]) is not str or re.match("^#[0-9a-fA-F]{6}$", self.config["sunday_color"]) is None:
+                self.config["sunday_color"] = mainWindow.config["sunday_color"]
         except FileNotFoundError:
             print("Config file not found.")
         except ValueError as e:
@@ -91,7 +105,13 @@ class mainWindow(Gtk.Window):
 
             for j in range(7):
                 if i == 0:
-                    text = (date(1, 1, 1) + timedelta(days = j)).strftime("%a").capitalize()
+                    sunday = self.config["sunday_first"]
+                    text = (date(1, 1, 8) + timedelta(days = j - sunday)).strftime("%a").capitalize()
+
+                    if (sunday == 1 and j == 0) or (sunday == 0 and j == 6):
+                        color = self.config["sunday_color"]
+                        text = f"<span fgcolor = '{color}'>{text}</span>"
+
                     self.lblDay[i][j].set_markup(f"<b>{text}</b>")
 
                 self.lblDay[i][j].set_size_request(40, 0)
@@ -140,7 +160,7 @@ class mainWindow(Gtk.Window):
                     offset = 2
 
                 # Determining each day of the month depending on row (i), column (j), offset and first day of the month
-                num = j + offset - first + 7 * (i - 1)
+                num = j + offset - first + 7 * (i - 1) - self.config["sunday_first"]
 
                 if num < 1:
                     num = (date(self.year, self.month, 1) + timedelta(days = num - 1)).strftime("%d")

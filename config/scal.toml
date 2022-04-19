@@ -1,1 +1,3 @@
 # Default config file
+sunday_first = false
+sunday_color = "#CC0000"
