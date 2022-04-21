@@ -97,8 +97,8 @@ class mainWindow(Gtk.Window):
         vboxBody = Gtk.Box(spacing = self.sp, orientation = 1)
         vboxFrame.pack_start(vboxBody, 0, 0, 0)
 
-        hboxRow = [Gtk.Box(spacing = self.sp) for i in range(7)]
-        self.lblDay = [[Gtk.Label() for i in range(7)] for i in range(7)]
+        hboxRow = [Gtk.Box(spacing = self.sp) for _ in range(7)]
+        self.lblDay = [[Gtk.Label() for _ in range(7)] for _ in range(7)]
 
         for i, row in enumerate(hboxRow):
             vboxBody.pack_start(row, 0, 0, 0)
@@ -130,8 +130,8 @@ class mainWindow(Gtk.Window):
             self.month = 1
             self.year += 1
 
+        widget.set_active(self.month - 1)
         self.spnYear.set_value(self.year)
-        self.cbxMonth.set_active(self.month - 1)
 
     def month_changed(self, widget):
         # Updates the widget only if the call comes from itself
@@ -170,9 +170,10 @@ class mainWindow(Gtk.Window):
                     nxt += 1
                     fg = "gray"
                 else:
+                    fg = "white"
+
                     if self.day == num:
                         bold = 1
-                    fg = "white"
 
                 text = str(num).rjust(2, "0")
 
@@ -182,7 +183,7 @@ class mainWindow(Gtk.Window):
 
                 self.lblDay[i][j].set_markup(f"<span fgcolor='{fg}'>{text}</span>")
 
-    def year_changed(self, widget, inc):
+    def year_changed(self, widget):
         try:
             self.year = int(widget.get_text())
             self.month_changed(None)
