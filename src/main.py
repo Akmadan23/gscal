@@ -18,14 +18,13 @@ class mainWindow(Gtk.Window):
 
     # Default configuration
     config = {
+        "window_resizable": False,
         "sunday_first": False,
         "sunday_color": "#CC0000",
     }
 
     def __init__(self):
         super().__init__(title = "Simple calendar")
-        self.set_border_width(self.sp)
-        self.set_resizable(0)
 
         ######## CONFIG ########
 
@@ -33,13 +32,13 @@ class mainWindow(Gtk.Window):
             # Importing settings from config file
             self.config = toml.load(expanduser("~/.config/scal/scal.toml"))
 
-            # If the sunday_first is not a bool value defaults to false
-            if "sunday_first" not in self.config or type(self.config["sunday_first"]) is not bool:
-                self.config["sunday_first"] = mainWindow.config["sunday_first"]
-
-            # If the sunday_color value is not a valid color defaults to red
-            if "sunday_color" not in self.config or type(self.config["sunday_color"]) is not str or re.match("^#[0-9a-fA-F]{6}$", self.config["sunday_color"]) is None:
-                self.config["sunday_color"] = mainWindow.config["sunday_color"]
+            # For each key of the default config dict:
+            # if the value type does not match the default type
+            # or if sunday_color does not match a hex color pattern
+            # it falls back to the default
+            for i in mainWindow.config:
+                if i not in self.config or type(self.config[i]) is not type(mainWindow.config[i]) or (i == "sunday_color" and re.match("^#[0-9a-fA-F]{6}$", self.config[i]) is None):
+                    self.config[i] = mainWindow.config[i]
         except FileNotFoundError:
             print("Config file not found.")
         except ValueError as e:
@@ -48,6 +47,8 @@ class mainWindow(Gtk.Window):
         # Main frame
         vboxFrame = Gtk.Box(spacing = self.sp, orientation = 1)
         self.add(vboxFrame)
+        self.set_border_width(self.sp)
+        self.set_resizable(self.config["window_resizable"])
 
         ######## HEADER ########
 

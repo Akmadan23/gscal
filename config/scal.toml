@@ -1,3 +1,4 @@
 # Default config file
+window_resizable = false
 sunday_first = false
 sunday_color = "#CC0000"
