@@ -24,13 +24,13 @@ class mainWindow(Gtk.Window):
     }
 
     def __init__(self):
-        super().__init__(title = "Simple calendar")
+        super().__init__(title = "MiniCal")
 
         ######## CONFIG ########
 
         try:
             # Importing settings from config file
-            self.config = toml.load(expanduser("~/.config/scal/scal.toml"))
+            self.config = toml.load(expanduser("~/.config/minical/minical.toml"))
 
             # For each key of the default config dict:
             # if the value type does not match the default type
