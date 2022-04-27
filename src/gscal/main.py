@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -7,6 +7,15 @@ import re
 import toml
 from os.path import expanduser
 from datetime import date, datetime, timedelta
+
+def run():
+    try:
+        win = mainWindow()
+        win.connect("destroy", Gtk.main_quit)
+        win.show_all()
+        Gtk.main()
+    except KeyboardInterrupt:
+        print("Interrupted by user.")
 
 class mainWindow(Gtk.Window):
     # Class variables
@@ -24,13 +33,13 @@ class mainWindow(Gtk.Window):
     }
 
     def __init__(self):
-        super().__init__(title = "MiniCal")
+        super().__init__(title = "Gscal")
 
         ######## CONFIG ########
 
         try:
             # Importing settings from config file
-            self.config = toml.load(expanduser("~/.config/minical/minical.toml"))
+            self.config = toml.load(expanduser("~/.config/gscal/gscal.toml"))
 
             # For each key of the default config dict:
             # if the value type does not match the default type
@@ -190,11 +199,3 @@ class mainWindow(Gtk.Window):
             self.month_changed(None)
         except ValueError:
             print("ERROR: Only years between 1 and 9999 are supported.")
-
-try:
-    win = mainWindow()
-    win.connect("destroy", Gtk.main_quit)
-    win.show_all()
-    Gtk.main()
-except KeyboardInterrupt:
-    print("Interrupted by user.")
