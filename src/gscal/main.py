@@ -1,29 +1,29 @@
 #!/usr/bin/env python
-import gi
+import gi, re, toml
+from os.path import expanduser
+from datetime import date, timedelta
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-import re
-import toml
-from os.path import expanduser
-from datetime import date, datetime, timedelta
-
 def run():
+    # Initializing main window
+    win = mainWindow()
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+
     try:
-        win = mainWindow()
-        win.connect("destroy", Gtk.main_quit)
-        win.show_all()
+        # Launching the GTK loop
         Gtk.main()
     except KeyboardInterrupt:
-        print("Interrupted by user.")
+        print("\n[WARNING] Interrupted by user.")
 
 class mainWindow(Gtk.Window):
     # Class variables
     sp = 8
-    now = datetime.now()
-    day = int(now.strftime("%d"))
-    month = int(now.strftime("%m"))
-    year = int(now.strftime("%Y"))
+    day = date.today().day
+    month = date.today().month
+    year = date.today().year
 
     # Default configuration
     config = {
@@ -33,6 +33,7 @@ class mainWindow(Gtk.Window):
     }
 
     def __init__(self):
+        # Setting window title
         super().__init__(title = "Gscal")
 
         ######## CONFIG ########
@@ -41,17 +42,15 @@ class mainWindow(Gtk.Window):
             # Importing settings from config file
             self.config = toml.load(expanduser("~/.config/gscal/gscal.toml"))
 
-            # For each key of the default config dict:
-            # if the value type does not match the default type
-            # or if sunday_color does not match a hex color pattern
-            # it falls back to the default
+            # For each key of the default config dict
             for i in mainWindow.config:
-                if i not in self.config or type(self.config[i]) is not type(mainWindow.config[i]) or (i == "sunday_color" and re.match("^#[0-9a-fA-F]{6}$", self.config[i]) is None):
+                # If the value type does not match the default type or if sunday_color does not match a hex color pattern it falls back to the default
+                if i not in self.config or type(self.config[i]) != type(mainWindow.config[i]) or (i == "sunday_color" and re.match("^#[0-9a-fA-F]{6}$", self.config[i]) is None):
                     self.config[i] = mainWindow.config[i]
         except FileNotFoundError:
-            print("Config file not found.")
+            print("[WARNING] Config file not found: default configuration loaded.")
         except ValueError as e:
-            print("Error in the config file:", e)
+            print(f"[WARNING] Error in the config file: {e}. Default configuration loaded.")
 
         # Main frame
         vboxFrame = Gtk.Box(spacing = self.sp, orientation = 1)
@@ -98,7 +97,7 @@ class mainWindow(Gtk.Window):
         )
 
         self.spnYear = Gtk.SpinButton(adjustment = adjYear, digits = 0)
-        self.spnYear.connect("changed", self.year_changed, 0)
+        self.spnYear.connect("changed", self.year_changed)
         self.spnYear.set_numeric(1)
         hboxHeader.pack_end(self.spnYear, 0, 0, 0)
 
@@ -140,7 +139,7 @@ class mainWindow(Gtk.Window):
             self.month = 1
             self.year += 1
 
-        widget.set_active(self.month - 1)
+        self.cbxMonth.set_active(self.month - 1)
         self.spnYear.set_value(self.year)
 
     def month_changed(self, widget):
@@ -159,9 +158,9 @@ class mainWindow(Gtk.Window):
 
                 # monthday number of the last day of the selected month
                 if self.month == 12:
-                    last = int((date(self.year + 1, 1, 1) - timedelta(days = 1)).strftime("%d"))
+                    last = (date(self.year + 1, 1, 1) - timedelta(days = 1)).day
                 else:
-                    last = int((date(self.year, self.month + 1, 1) - timedelta(days = 1)).strftime("%d"))
+                    last = (date(self.year, self.month + 1, 1) - timedelta(days = 1)).day
 
                 # Setting an offset depending on the first day of the month
                 if first < 2:
@@ -173,7 +172,7 @@ class mainWindow(Gtk.Window):
                 num = j + offset - first + 7 * (i - 1) - self.config["sunday_first"]
 
                 if num < 1:
-                    num = (date(self.year, self.month, 1) + timedelta(days = num - 1)).strftime("%d")
+                    num = (date(self.year, self.month, 1) + timedelta(days = num - 1)).day
                     fg = "gray"
                 elif num > last:
                     num = nxt
@@ -197,5 +196,9 @@ class mainWindow(Gtk.Window):
         try:
             self.year = int(widget.get_text())
             self.month_changed(None)
-        except ValueError:
-            print("ERROR: Only years between 1 and 9999 are supported.")
+        except (ValueError, OverflowError):
+            print("[WARNING] Only years between 1 and 9999 are supported.")
+
+# Run the app when launched as script
+if __name__ == "__main__":
+    run()
