@@ -1,0 +1,8 @@
+# Whether the window can be manually resized
+window_resizable = false
+
+# If true sets monday as the first day of the week
+sunday_first = false
+
+# Defines the color of sunday's heading label
+sunday_color = "#CC0000"
