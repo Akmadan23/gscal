@@ -1,12 +1,34 @@
 #!/usr/bin/env python
-import gi, re, toml
-from os.path import expanduser
+import gi, re, sys, toml, getopt
+from os.path import dirname, expanduser
 from datetime import date, timedelta
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 def run():
+    try:
+        # Parsing options and arguments
+        opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "version"])
+    except getopt.GetoptError as e:
+        print("[ERRROR]", e)
+        sys.exit(2)
+
+    # Handling options
+    for o, _ in opts:
+        if o in ["-h", "--help"]:
+            f = open(dirname(__file__) + "/data/help.txt", "r")
+            print(f.read())
+            sys.exit()
+        elif o in ["-v", "--version"]:
+            from importlib.metadata import version
+            print("gscal", version("gscal"))
+            sys.exit()
+
+    # Handling arguments (not supported)
+    for a in args:
+        print("[WARNING] Unknown argument:", a)
+
     # Initializing main window
     win = mainWindow()
     win.connect("destroy", Gtk.main_quit)
@@ -42,9 +64,9 @@ class mainWindow(Gtk.Window):
             # Importing settings from config file
             self.config = toml.load(expanduser("~/.config/gscal/gscal.toml"))
 
-            # For each key of the default config dict
+            # For each key of the default config dict:
             for i in mainWindow.config:
-                # If the value type does not match the default type or if sunday_color does not match a hex color pattern it falls back to the default
+                # if the value type does not match the default type or if sunday_color does not match a hex color pattern it falls back to the default
                 if i not in self.config or type(self.config[i]) != type(mainWindow.config[i]) or (i == "sunday_color" and re.match("^#[0-9a-fA-F]{6}$", self.config[i]) is None):
                     self.config[i] = mainWindow.config[i]
         except FileNotFoundError:
