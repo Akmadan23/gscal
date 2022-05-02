@@ -1,5 +1,7 @@
 Usage: gscal [options]
 
 Options:
-    -h, --help          Show this help message
-    -v, --version       Show version number
+    -h, --help                  Show this help message
+    -v, --version               Show version number
+    -c PATH, --config=PATH      Path to config file
+                                    default: ~/.config/gscal/gscal.toml

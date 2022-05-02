@@ -215,13 +215,13 @@ class mainWindow(Gtk.Window):
                 else:
                     fg = "white"
 
-                    if self.day == num:
+                    if self.day == num and self.month == mainWindow.month:
                         bold = 1
 
                 text = str(num).rjust(2, "0")
 
                 if bold:
-                    text = f"<b>{text}</b>"
+                    text = f"<b>[{text}]</b>"
                     bold = 0
 
                 self.lblDay[i][j].set_markup(f"<span fgcolor='{fg}'>{text}</span>")
