@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import gi, re, sys, toml, getopt
-from os.path import isfile, dirname, expanduser
-from datetime import date, timedelta
+import gi, re, sys, toml, getopt, datetime as dt
+from importlib import metadata
+from os import path
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -27,16 +27,15 @@ def run():
     # Handling options
     for o, a in opts:
         if o in ["-h", "--help"]:
-            f = open(dirname(__file__) + "/data/help.txt", "r")
+            f = open(path.dirname(__file__) + "/data/help.txt", "r")
             print(f.read())
             f.close()
             sys.exit()
         elif o in ["-v", "--version"]:
-            from importlib.metadata import version
-            print("gscal", version("gscal"))
+            print("gscal", metadata.version("gscal"))
             sys.exit()
         elif o in ["-c", "--config"]:
-            if isfile(expanduser(a)):
+            if path.isfile(path.expanduser(a)):
                 config_path = a
             else:
                 print(f"[WARNING] File \"{a}\" not found.")
@@ -47,7 +46,7 @@ def run():
 
     try:
         # Importing settings from config file
-        config = toml.load(expanduser(config_path))
+        config = toml.load(path.expanduser(config_path))
 
         # For each key of the default config dict
         for i in default_config:
@@ -75,9 +74,9 @@ def run():
 class mainWindow(Gtk.Window):
     # Class variables
     sp = 8
-    day = date.today().day
-    month = date.today().month
-    year = date.today().year
+    day = dt.date.today().day
+    month = dt.date.today().month
+    year = dt.date.today().year
 
     def __init__(self, c):
         # Setting window title
@@ -100,7 +99,7 @@ class mainWindow(Gtk.Window):
 
         # Configuring month's combo box
         monthText = Gtk.CellRendererText()
-        monthList = [(date(1, 1, 1) + timedelta(days = i * 31)).strftime("%B").capitalize() for i in range(12)]
+        monthList = [(dt.date(1, 1, 1) + dt.timedelta(days = i * 31)).strftime("%B").capitalize() for i in range(12)]
         monthStore = Gtk.ListStore(str)
 
         for m in monthList:
@@ -149,7 +148,7 @@ class mainWindow(Gtk.Window):
             for j in range(7):
                 if i == 0:
                     sunday = self.config["sunday_first"]
-                    text = (date(1, 1, 8) + timedelta(days = j - sunday)).strftime("%a").capitalize()
+                    text = (dt.date(1, 1, 8) + dt.timedelta(days = j - sunday)).strftime("%a").capitalize()
 
                     if (sunday == 1 and j == 0) or (sunday == 0 and j == 6):
                         color = self.config["sunday_color"]
@@ -188,13 +187,13 @@ class mainWindow(Gtk.Window):
         for i in range(1, len(self.lblDay)):
             for j in range(len(self.lblDay[i])):
                 # Weekday number of the first day of the selected month
-                first = int(date(self.year, self.month, 1).strftime("%w"))
+                first = int(dt.date(self.year, self.month, 1).strftime("%w"))
 
                 # monthday number of the last day of the selected month
                 if self.month == 12:
-                    last = (date(self.year + 1, 1, 1) - timedelta(days = 1)).day
+                    last = (dt.date(self.year + 1, 1, 1) - dt.timedelta(days = 1)).day
                 else:
-                    last = (date(self.year, self.month + 1, 1) - timedelta(days = 1)).day
+                    last = (dt.date(self.year, self.month + 1, 1) - dt.timedelta(days = 1)).day
 
                 # Setting an offset depending on the first day of the month
                 if first < 2:
@@ -206,7 +205,7 @@ class mainWindow(Gtk.Window):
                 num = j + offset - first + 7 * (i - 1) - self.config["sunday_first"]
 
                 if num < 1:
-                    num = (date(self.year, self.month, 1) + timedelta(days = num - 1)).day
+                    num = (dt.date(self.year, self.month, 1) + dt.timedelta(days = num - 1)).day
                     fg = "gray"
                 elif num > last:
                     num = nxt
