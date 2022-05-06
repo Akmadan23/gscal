@@ -38,7 +38,7 @@ def run():
             if path.isfile(path.expanduser(a)):
                 config_path = a
             else:
-                print(f"[WARNING] File \"{a}\" not found.")
+                print(f"[WARNING] File {a} not found: reading from default config path.")
 
     # Handling arguments (not supported)
     for a in args:
@@ -93,7 +93,7 @@ class mainWindow(Gtk.Window):
 
         ######## HEADER ########
 
-        # Box containing control buttons
+        # Box containing month and year controls
         hboxHeader = Gtk.Box(spacing = self.sp)
         vboxFrame.pack_start(hboxHeader, 0, 0, 0)
 
@@ -105,6 +105,7 @@ class mainWindow(Gtk.Window):
         for m in monthList:
             monthStore.append([m])
 
+        # Month combo box
         self.cbxMonth = Gtk.ComboBox()
         self.cbxMonth.set_model(monthStore)
         self.cbxMonth.set_active(self.month - 1)
@@ -113,13 +114,15 @@ class mainWindow(Gtk.Window):
         self.cbxMonth.connect("changed", self.month_changed)
         hboxHeader.pack_start(self.cbxMonth, 0, 0, 0)
 
+        # Previous month button
         btnPrevMonth = Gtk.Button(label = "<")
         btnPrevMonth.connect("clicked", self.month_inc, -1)
-        hboxHeader.pack_start(btnPrevMonth, 0, 0, 0)
+        hboxHeader.pack_start(btnPrevMonth, 1, 1, 0)
 
+        # Next month button
         btnNextMonth = Gtk.Button(label = ">")
         btnNextMonth.connect("clicked", self.month_inc, 1)
-        hboxHeader.pack_start(btnNextMonth, 0, 0, 0)
+        hboxHeader.pack_start(btnNextMonth, 1, 1, 0)
 
         # Configuring year's spin button
         adjYear = Gtk.Adjustment(
@@ -129,6 +132,7 @@ class mainWindow(Gtk.Window):
             step_increment = 1
         )
 
+        # Year spin button
         self.spnYear = Gtk.SpinButton(adjustment = adjYear, digits = 0)
         self.spnYear.connect("changed", self.year_changed)
         self.spnYear.set_numeric(1)
@@ -136,28 +140,25 @@ class mainWindow(Gtk.Window):
 
         ######## BODY ########
 
-        vboxBody = Gtk.Box(spacing = self.sp, orientation = 1)
-        vboxFrame.pack_start(vboxBody, 0, 0, 0)
-
-        hboxRow = [Gtk.Box(spacing = self.sp) for _ in range(7)]
+        # Grid containing each day of the current month
+        gridBody = Gtk.Grid(row_spacing = self.sp, column_spacing = self.sp)
+        vboxFrame.pack_start(gridBody, 0, 0, 0)
         self.lblDay = [[Gtk.Label() for _ in range(7)] for _ in range(7)]
 
-        for i, row in enumerate(hboxRow):
-            vboxBody.pack_start(row, 0, 0, 0)
-
-            for j in range(7):
-                if i == 0:
+        for row in range(7):
+            for col in range(7):
+                if row == 0:
                     sunday = self.config["sunday_first"]
-                    text = (dt.date(1, 1, 8) + dt.timedelta(days = j - sunday)).strftime("%a").capitalize()
+                    text = (dt.date(1, 1, 8) + dt.timedelta(days = col - sunday)).strftime("%a").capitalize()
 
-                    if (sunday == 1 and j == 0) or (sunday == 0 and j == 6):
+                    if (sunday == 1 and col == 0) or (sunday == 0 and col == 6):
                         color = self.config["sunday_color"]
                         text = f"<span fgcolor = '{color}'>{text}</span>"
 
-                    self.lblDay[i][j].set_markup(f"<b>{text}</b>")
+                    self.lblDay[row][col].set_markup(f"<b>{text}</b>")
 
-                self.lblDay[i][j].set_size_request(40, 0)
-                row.pack_start(self.lblDay[i][j], 1, 1, 0)
+                self.lblDay[row][col].set_size_request(40, 0)
+                gridBody.attach(self.lblDay[row][col], col, row, 1, 1)
 
         # Setting month days for the first time
         self.month_changed(None)
@@ -184,8 +185,8 @@ class mainWindow(Gtk.Window):
         nxt = 1
         bold = 0
 
-        for i in range(1, len(self.lblDay)):
-            for j in range(len(self.lblDay[i])):
+        for row in range(1, len(self.lblDay)):
+            for col in range(len(self.lblDay[row])):
                 # Weekday number of the first day of the selected month
                 first = int(dt.date(self.year, self.month, 1).strftime("%w"))
 
@@ -201,8 +202,8 @@ class mainWindow(Gtk.Window):
                 else:
                     offset = 2
 
-                # Determining each day of the month depending on row (i), column (j), offset and first day of the month
-                num = j + offset - first + 7 * (i - 1) - self.config["sunday_first"]
+                # Determining each day of the month depending on row, column, offset and first day of the month
+                num = col + offset - first + 7 * (row - 1) - self.config["sunday_first"]
 
                 if num < 1:
                     num = (dt.date(self.year, self.month, 1) + dt.timedelta(days = num - 1)).day
@@ -214,7 +215,7 @@ class mainWindow(Gtk.Window):
                 else:
                     fg = "white"
 
-                    if self.day == num and self.month == mainWindow.month:
+                    if self.day == num and self.month == mainWindow.month and self.year == mainWindow.year:
                         bold = 1
 
                 text = str(num).rjust(2, "0")
@@ -223,7 +224,7 @@ class mainWindow(Gtk.Window):
                     text = f"<b>[{text}]</b>"
                     bold = 0
 
-                self.lblDay[i][j].set_markup(f"<span fgcolor='{fg}'>{text}</span>")
+                self.lblDay[row][col].set_markup(f"<span fgcolor='{fg}'>{text}</span>")
 
     def year_changed(self, widget):
         try:
