@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import gi, re, sys, toml, getopt, datetime as dt
+import gi, re, sys, toml, getopt, datetime as dt, calendar as cal
 from importlib import metadata
 from os import path
 
@@ -99,11 +99,10 @@ class mainWindow(Gtk.Window):
 
         # Configuring month's combo box
         monthText = Gtk.CellRendererText()
-        monthList = [(dt.date(1, 1, 1) + dt.timedelta(days = i * 31)).strftime("%B").capitalize() for i in range(12)]
         monthStore = Gtk.ListStore(str)
 
-        for m in monthList:
-            monthStore.append([m])
+        for m in cal.month_name[1:]:
+            monthStore.append([m.capitalize()])
 
         # Month combo box
         self.cbxMonth = Gtk.ComboBox()
@@ -115,12 +114,12 @@ class mainWindow(Gtk.Window):
         hboxHeader.pack_start(self.cbxMonth, 0, 0, 0)
 
         # Previous month button
-        btnPrevMonth = Gtk.Button(label = "<")
+        btnPrevMonth = Gtk.Button(label = "\u25C0")
         btnPrevMonth.connect("clicked", self.month_inc, -1)
         hboxHeader.pack_start(btnPrevMonth, 1, 1, 0)
 
         # Next month button
-        btnNextMonth = Gtk.Button(label = ">")
+        btnNextMonth = Gtk.Button(label = "\u25B6")
         btnNextMonth.connect("clicked", self.month_inc, 1)
         hboxHeader.pack_start(btnNextMonth, 1, 1, 0)
 
@@ -141,24 +140,27 @@ class mainWindow(Gtk.Window):
         ######## BODY ########
 
         # Grid containing each day of the current month
-        gridBody = Gtk.Grid(row_spacing = self.sp, column_spacing = self.sp)
-        vboxFrame.pack_start(gridBody, 0, 0, 0)
-        self.lblDay = [[Gtk.Label() for _ in range(7)] for _ in range(7)]
+        self.gridBody = Gtk.Grid(row_spacing = self.sp, column_spacing = self.sp)
+        vboxFrame.pack_start(self.gridBody, 1, 1, 0)
 
         for row in range(7):
             for col in range(7):
+                lblDay = Gtk.Label()
+
                 if row == 0:
                     sunday = self.config["sunday_first"]
-                    text = (dt.date(1, 1, 8) + dt.timedelta(days = col - sunday)).strftime("%a").capitalize()
+                    text = cal.day_abbr[col - sunday].capitalize()
 
                     if (sunday == 1 and col == 0) or (sunday == 0 and col == 6):
                         color = self.config["sunday_color"]
                         text = f"<span fgcolor = '{color}'>{text}</span>"
 
-                    self.lblDay[row][col].set_markup(f"<b>{text}</b>")
+                    lblDay.set_markup(f"<b>{text}</b>")
 
-                self.lblDay[row][col].set_size_request(40, 0)
-                gridBody.attach(self.lblDay[row][col], col, row, 1, 1)
+                lblDay.set_size_request(40, 0)
+                self.gridBody.attach(lblDay, col, row, 1, 1)
+
+
 
         # Setting month days for the first time
         self.month_changed(None)
@@ -177,7 +179,7 @@ class mainWindow(Gtk.Window):
         self.spnYear.set_value(self.year)
 
     def month_changed(self, widget):
-        # Updates the widget only if the call comes from itself
+        # Updating the widget only if the call comes from itself
         if widget:
             self.month = widget.get_active() + 1
 
@@ -185,10 +187,10 @@ class mainWindow(Gtk.Window):
         nxt = 1
         bold = 0
 
-        for row in range(1, len(self.lblDay)):
-            for col in range(len(self.lblDay[row])):
+        for row in range(1, 7):
+            for col in range(7):
                 # Weekday number of the first day of the selected month
-                first = int(dt.date(self.year, self.month, 1).strftime("%w"))
+                first = cal.weekday(self.year, self.month, 1) or 7
 
                 # monthday number of the last day of the selected month
                 if self.month == 12:
@@ -196,14 +198,8 @@ class mainWindow(Gtk.Window):
                 else:
                     last = (dt.date(self.year, self.month + 1, 1) - dt.timedelta(days = 1)).day
 
-                # Setting an offset depending on the first day of the month
-                if first < 2:
-                    offset = -5
-                else:
-                    offset = 2
-
                 # Determining each day of the month depending on row, column, offset and first day of the month
-                num = col + offset - first + 7 * (row - 1) - self.config["sunday_first"]
+                num = 1 + col - first + 7 * (row - 1) - self.config["sunday_first"]
 
                 if num < 1:
                     num = (dt.date(self.year, self.month, 1) + dt.timedelta(days = num - 1)).day
@@ -224,7 +220,8 @@ class mainWindow(Gtk.Window):
                     text = f"<b>[{text}]</b>"
                     bold = 0
 
-                self.lblDay[row][col].set_markup(f"<span fgcolor='{fg}'>{text}</span>")
+                lblDay = self.gridBody.get_child_at(col, row)
+                lblDay.set_markup(f"<span fgcolor='{fg}'>{text}</span>")
 
     def year_changed(self, widget):
         try:
