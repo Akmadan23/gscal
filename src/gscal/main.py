@@ -113,16 +113,6 @@ class mainWindow(Gtk.Window):
         self.cbxMonth.connect("changed", self.month_changed)
         hboxHeader.pack_start(self.cbxMonth, 0, 0, 0)
 
-        # Previous month button
-        btnPrevMonth = Gtk.Button(label = "\u25C0")
-        btnPrevMonth.connect("clicked", self.month_inc, -1)
-        hboxHeader.pack_start(btnPrevMonth, 1, 1, 0)
-
-        # Next month button
-        btnNextMonth = Gtk.Button(label = "\u25B6")
-        btnNextMonth.connect("clicked", self.month_inc, 1)
-        hboxHeader.pack_start(btnNextMonth, 1, 1, 0)
-
         # Configuring year's spin button
         adjYear = Gtk.Adjustment(
             value = self.year,
@@ -160,7 +150,23 @@ class mainWindow(Gtk.Window):
                 lblDay.set_size_request(40, 0)
                 self.gridBody.attach(lblDay, col, row, 1, 1)
 
+        ######## FOOTER ########
 
+        # Bottom box containing previous and next month buttons
+        hboxFooter = Gtk.Box(spacing = self.sp)
+        vboxFrame.pack_start(hboxFooter, 0, 0, 0)
+
+        # Previous month button
+        self.btnPrevMonth = Gtk.Button()
+        self.btnPrevMonth.set_size_request(120, 0)
+        self.btnPrevMonth.connect("clicked", self.month_inc, -1)
+        hboxFooter.pack_start(self.btnPrevMonth, 1, 1, 0)
+
+        # Next month button
+        self.btnNextMonth = Gtk.Button()
+        self.btnNextMonth.set_size_request(120, 0)
+        self.btnNextMonth.connect("clicked", self.month_inc, 1)
+        hboxFooter.pack_start(self.btnNextMonth, 1, 1, 0)
 
         # Setting month days for the first time
         self.month_changed(None)
@@ -182,6 +188,10 @@ class mainWindow(Gtk.Window):
         # Updating the widget only if the call comes from itself
         if widget:
             self.month = widget.get_active() + 1
+
+        # Updating prev and next month buttons
+        self.btnPrevMonth.set_label("\u25C0  " + cal.month_name[self.month - 1 or 12].capitalize())
+        self.btnNextMonth.set_label(cal.month_name[self.month - 12 or 1].capitalize() + "  \u25B6")
 
         # Counter for subsequent month days and bold flag
         nxt = 1
