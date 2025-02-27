@@ -6,9 +6,10 @@ from gi.repository import Gtk
 class MainWindow(Gtk.Window):
     # Class variables
     sp = 8
-    day = dt.date.today().day
-    month = dt.date.today().month
-    year = dt.date.today().year
+    today = dt.date.today()
+    day = today.day
+    month = today.month
+    year = today.year
     style = Gtk.StyleContext()
 
     def __init__(self, c):
@@ -18,8 +19,12 @@ class MainWindow(Gtk.Window):
         # Import config as object variable
         self.config = c
 
-        # Define foreground color based on current GTK theme
-        self.fg_color = self.style.lookup_color("fg_color")[1].to_color().to_string()
+        # Define foreground color based on GTK theme
+        for color_name in ["theme_text_color", "theme_fg_color"]:
+            found, color = self.style.lookup_color(color_name)
+            if found:
+                self.fg_color = color.to_color().to_string()
+                break
 
         # Handle events
         self.connect("key-press-event", self.key_listener)
