@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Gscal
+Version=0.3.1
+GenericName=Calendar
+Comment=GTK Simple Calendar
+Exec=gscal

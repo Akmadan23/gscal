@@ -30,5 +30,9 @@ st.setup(
 
     entry_points = {
         "console_scripts": ["gscal = gscal.__main__:run"]
-    }
+    },
+
+    data_files = [
+        ("share/applications", ["gscal.desktop"]),
+    ]
 )
